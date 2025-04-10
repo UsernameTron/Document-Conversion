@@ -1,0 +1,47 @@
+{
+  "name": "conversion",
+  "version": "1.0.0",
+  "description": "A user-friendly application that allows users to select a use case, choose a target format, upload a document, and receive a converted result.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "server": "node server/index.js",
+    "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
+    "build": "next build",
+    "start": "npm run server",
+    "start:prod": "NODE_ENV=production concurrently \"next start\" \"node server/index.js\"",
+    "lint": "next lint",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:conversions": "node ./test/test-conversions.js",
+    "test:all-conversions": "node ./test/test-all-conversions.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "canvas": "^3.1.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "docx": "^9.2.0",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsdom": "^26.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.9.0",
+    "marked": "^15.0.7",
+    "multer": "^1.4.5-lts.1",
+    "next": "^15.2.1",
+    "papaparse": "^5.5.2",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tesseract.js": "^6.0.0",
+    "winston": "^3.17.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
