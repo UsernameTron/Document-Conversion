@@ -1,4 +1,4 @@
-const fs = require('fs/promises');
+const fs = require('fs').promises;
 const path = require('path');
 const { JSDOM } = require('jsdom');
 
@@ -175,7 +175,69 @@ async function htmlToMarkdown(inputFilePath, outputDir) {
     return outputFilePath;
   } catch (error) {
     console.error('Error converting HTML to Markdown:', error);
-    throw error;
+    throw new Error(`Failed to convert HTML to Markdown: ${error.message}`);
   }
 }
-module.exports = { htmlToMarkdown };
+
+/**
+ * Directly converts HTML to Markdown without specifying output directory
+ * @param {string} inputPath - Path to the input HTML file
+ * @returns {Promise<string>} - Path to the converted file
+ */
+async function convertHtmlToMarkdown(inputPath) {
+  try {
+    const htmlData = await fs.readFile(inputPath, 'utf8');
+    
+    // Use JSDOM to parse the HTML
+    const dom = new JSDOM(htmlData);
+    const document = dom.window.document;
+    
+    // Simple HTML to Markdown converter
+    let markdown = '';
+    
+    // Process headings
+    const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    headings.forEach(heading => {
+      const level = parseInt(heading.tagName.substring(1));
+      markdown += '#'.repeat(level) + ' ' + heading.textContent.trim() + '\n\n';
+    });
+    
+    // Process paragraphs
+    const paragraphs = document.querySelectorAll('p');
+    paragraphs.forEach(paragraph => {
+      markdown += paragraph.textContent.trim() + '\n\n';
+    });
+    
+    // Process lists
+    const lists = document.querySelectorAll('ul, ol');
+    lists.forEach(list => {
+      const items = list.querySelectorAll('li');
+      items.forEach((item, index) => {
+        const prefix = list.tagName === 'UL' ? '- ' : `${index + 1}. `;
+        markdown += prefix + item.textContent.trim() + '\n';
+      });
+      markdown += '\n';
+    });
+    
+    // Process links
+    const links = document.querySelectorAll('a');
+    links.forEach(link => {
+      const text = link.textContent.trim();
+      const href = link.getAttribute('href');
+      if (href) {
+        markdown += `[${text}](${href})\n\n`;
+      }
+    });
+    
+    // Save the markdown
+    const outputPath = inputPath.replace(/\.html$/, '.md');
+    await fs.writeFile(outputPath, markdown);
+    
+    return outputPath;
+  } catch (error) {
+    console.error('Error converting HTML to Markdown:', error);
+    throw new Error(`Failed to convert HTML to Markdown: ${error.message}`);
+  }
+}
+
+module.exports = { htmlToMarkdown, convertHtmlToMarkdown };

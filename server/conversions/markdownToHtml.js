@@ -1,6 +1,6 @@
-const fs = require('fs/promises');
+const fs = require('fs').promises;
 const path = require('path');
-const { marked } = require('marked');
+const marked = require('marked');
 
 /**
  * Converts Markdown file to HTML
@@ -38,23 +38,22 @@ async function markdownToHtml(inputFilePath, outputDir) {
   <title>${path.basename(inputFilePath, path.extname(inputFilePath))}</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: system-ui, -apple-system, sans-serif;
       line-height: 1.6;
-      color: #333;
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
-      padding: 1rem;
+      padding: 20px;
+      color: #333;
     }
     pre {
       background-color: #f5f5f5;
-      padding: 1rem;
+      padding: 1em;
       border-radius: 4px;
       overflow-x: auto;
     }
     code {
-      font-family: Consolas, Monaco, "Andale Mono", monospace;
       background-color: #f5f5f5;
-      padding: 0.2em 0.4em;
+      padding: 2px 4px;
       border-radius: 3px;
     }
     pre code {
@@ -102,7 +101,62 @@ async function markdownToHtml(inputFilePath, outputDir) {
     return outputFilePath;
   } catch (error) {
     console.error('Error converting Markdown to HTML:', error);
-    throw error;
+    throw new Error(`Failed to convert Markdown to HTML: ${error.message}`);
   }
 }
-module.exports = { markdownToHtml };
+
+/**
+ * Direct conversion from Markdown to HTML without specifying output directory
+ * @param {string} inputPath - Path to the input Markdown file
+ * @returns {Promise<string>} - Path to the converted file
+ */
+async function convertMarkdownToHtml(inputPath) {
+  try {
+    const markdownData = await fs.readFile(inputPath, 'utf8');
+    const htmlContent = marked.parse(markdownData);
+    
+    // Create a complete HTML document
+    const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Converted from Markdown</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 1em;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        code {
+            background-color: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    ${htmlContent}
+</body>
+</html>`;
+    
+    const outputPath = inputPath.replace(/\.(md|markdown)$/, '.html');
+    await fs.writeFile(outputPath, fullHtml);
+    
+    return outputPath;
+  } catch (error) {
+    console.error('Error converting Markdown to HTML:', error);
+    throw new Error(`Failed to convert Markdown to HTML: ${error.message}`);
+  }
+}
+
+module.exports = { markdownToHtml, convertMarkdownToHtml };

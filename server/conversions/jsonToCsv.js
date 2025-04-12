@@ -1,6 +1,6 @@
-const fs = require('fs/promises');
+const fs = require('fs').promises;
 const path = require('path');
-const papaparse = require('papaparse');
+const Papa = require('papaparse');
 
 /**
  * Converts JSON file to CSV
@@ -21,8 +21,12 @@ async function jsonToCsv(inputFilePath, outputDir) {
     let dataArray = data;
     if (!Array.isArray(data)) {
       if (typeof data === 'object' && data !== null) {
-        // Convert object to array for CSV conversion
-        dataArray = [data];
+        // Handle nested objects by flattening them
+        if (Object.values(data).some(val => typeof val === 'object' && val !== null)) {
+          dataArray = [flattenObject(data)];
+        } else {
+          dataArray = [data];
+        }
       } else {
         throw new Error('JSON data must be an object or an array of objects to convert to CSV');
       }
@@ -34,7 +38,7 @@ async function jsonToCsv(inputFilePath, outputDir) {
     }
     
     // Convert to CSV
-    const csvData = papaparse.unparse(dataArray, {
+    const csvData = Papa.unparse(dataArray, {
       header: true,
       newline: '\n'
     });
@@ -49,7 +53,58 @@ async function jsonToCsv(inputFilePath, outputDir) {
     return outputFilePath;
   } catch (error) {
     console.error('Error converting JSON to CSV:', error);
-    throw error;
+    throw new Error(`Failed to convert JSON to CSV: ${error.message}`);
   }
 }
-module.exports = { jsonToCsv };
+
+/**
+ * Directly converts JSON to CSV without specifying output directory
+ * @param {string} inputPath - Path to the input JSON file
+ * @returns {Promise<string>} - Path to the converted file
+ */
+async function convertJsonToCsv(inputPath) {
+  try {
+    const jsonData = await fs.readFile(inputPath, 'utf8');
+    let data = JSON.parse(jsonData);
+    
+    // If data is not an array, convert it to an array for CSV conversion
+    if (!Array.isArray(data)) {
+      if (typeof data === 'object') {
+        // Handle nested objects by flattening them
+        if (Object.values(data).some(val => typeof val === 'object' && val !== null)) {
+          data = [flattenObject(data)];
+        } else {
+          data = [data];
+        }
+      } else {
+        throw new Error('JSON data is not in a format convertible to CSV');
+      }
+    }
+    
+    // Convert to CSV
+    const csv = Papa.unparse(data);
+    
+    const outputPath = inputPath.replace(/\.json$/, '.csv');
+    await fs.writeFile(outputPath, csv);
+    
+    return outputPath;
+  } catch (error) {
+    console.error('Error converting JSON to CSV:', error);
+    throw new Error(`Failed to convert JSON to CSV: ${error.message}`);
+  }
+}
+
+// Helper function to flatten nested objects
+function flattenObject(obj, prefix = '') {
+  return Object.keys(obj).reduce((acc, k) => {
+    const pre = prefix.length ? `${prefix}.` : '';
+    if (typeof obj[k] === 'object' && obj[k] !== null && !Array.isArray(obj[k])) {
+      Object.assign(acc, flattenObject(obj[k], `${pre}${k}`));
+    } else {
+      acc[`${pre}${k}`] = Array.isArray(obj[k]) ? JSON.stringify(obj[k]) : obj[k];
+    }
+    return acc;
+  }, {});
+}
+
+module.exports = { jsonToCsv, convertJsonToCsv };

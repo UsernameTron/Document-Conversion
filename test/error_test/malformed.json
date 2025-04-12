@@ -1,0 +1,17 @@
+[
+  {
+    "header1": "value1",
+    "header2": "value2"
+  },
+  {
+    "header1": "value3",
+    "header2": "value4",
+    "header3": "value5",
+    "__parsed_extra": [
+      "extra_value"
+    ]
+  },
+  {
+    "header1": "unclosed quote,value6,value7\nvalue8,,value10"
+  }
+]
